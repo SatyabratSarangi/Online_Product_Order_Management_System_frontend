@@ -1,0 +1,69 @@
+<div class="login-wrapper">
+  <button class="theme-toggle-btn" (click)="themeService.toggleTheme()" aria-label="Toggle Theme">
+    <span class="material-icons-outlined">
+      {{ (themeService.isDarkMode$ | async) ? 'light_mode' : 'dark_mode' }}
+    </span>
+  </button>
+
+  <div class="login-card fade-in">
+    <div class="brand-header">
+      <div class="logo-box">
+        <span class="material-icons-outlined">shopping_cart</span>
+      </div>
+      <h1>OMS Portal</h1>
+      <p>Order Management System</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        <span class="material-icons-outlined">error_outline</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <div class="input-with-icon">
+          <span class="material-icons-outlined input-icon">person</span>
+          <input 
+            type="text" 
+            id="username" 
+            formControlName="username" 
+            class="form-control" 
+            placeholder="Enter username"
+            [class.is-invalid]="submitted && f['username'].errors"
+          />
+        </div>
+        <div *ngIf="submitted && f['username'].errors" class="invalid-feedback">
+          Username is required.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-with-icon">
+          <span class="material-icons-outlined input-icon">lock</span>
+          <input 
+            type="password" 
+            id="password" 
+            formControlName="password" 
+            class="form-control" 
+            placeholder="Enter password"
+            [class.is-invalid]="submitted && f['password'].errors"
+          />
+        </div>
+        <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+          Password is required.
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="loading" class="btn btn-primary btn-block">
+        <span *ngIf="loading" class="spinner"></span>
+        <span>{{ loading ? 'Signing in...' : 'Sign In' }}</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>Don't have an account? <a routerLink="/register">Register here</a></p>
+    </div>
+  </div>
+</div>

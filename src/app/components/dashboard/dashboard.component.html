@@ -1,0 +1,492 @@
+<div class="dashboard-container fade-in">
+  
+  <!-- ================== ADMIN VIEW ================== -->
+  <div *ngIf="isAdmin" class="admin-dashboard">
+    <div class="page-title-bar">
+      <div>
+        <h1>Overview Dashboard</h1>
+        <p>Welcome back, Administrator. Here's your system status.</p>
+      </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card card">
+        <div class="metric-icon bg-indigo">
+          <span class="material-icons-outlined">inventory_2</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ summary?.totalProducts || 0 }}</h3>
+          <p>Total Products</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-pink">
+          <span class="material-icons-outlined">shopping_cart</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ summary?.totalOrders || 0 }}</h3>
+          <p>Total Orders</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-green">
+          <span class="material-icons-outlined">payments</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ (summary?.totalRevenue || 0) | currency:'INR':'symbol':'1.2-2' }}</h3>
+          <p>Total Revenue</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-cyan">
+          <span class="material-icons-outlined">people</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ summary?.totalCustomers || 0 }}</h3>
+          <p>Active Customers</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-orange">
+          <span class="material-icons-outlined">pending_actions</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ summary?.pendingOrders || 0 }}</h3>
+          <p>Pending Orders</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-teal">
+          <span class="material-icons-outlined">trending_up</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ (summary?.averageOrderValue || 0) | currency:'INR':'symbol':'1.2-2' }}</h3>
+          <p>Avg Order Value</p>
+        </div>
+      </div>
+
+      <div class="metric-card card">
+        <div class="metric-icon bg-red">
+          <span class="material-icons-outlined">support</span>
+        </div>
+        <div class="metric-info">
+          <h3>{{ summary?.openTickets || 0 }}</h3>
+          <p>Open Tickets</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Area -->
+    <div class="charts-grid">
+      <!-- Sales Chart -->
+      <div class="chart-card card">
+        <h3>Monthly Sales Summary</h3>
+        <div class="chart-container">
+          <div class="bar-chart" *ngIf="monthlySalesKeys.length > 0; else noSalesData">
+            <div class="bar-wrapper" *ngFor="let key of monthlySalesKeys">
+              <div class="bar-value">{{ summary.monthlySales[key] | currency:'INR':'symbol':'1.0-0' }}</div>
+              <div class="bar" [style.height.%]="getSalesPercentage(summary.monthlySales[key])"></div>
+              <div class="bar-label">{{ key }}</div>
+            </div>
+          </div>
+          <ng-template #noSalesData>
+            <div class="empty-chart">No monthly sales data found</div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Status Chart -->
+      <div class="chart-card card">
+        <h3>Order Status Distribution</h3>
+        <div class="status-distribution">
+          <div class="status-chart-svg">
+            <svg viewBox="0 0 100 100" class="donut-chart">
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--border-color)" stroke-width="8"></circle>
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--primary)" stroke-width="8"
+                      [attr.stroke-dasharray]="getStrokeDashArray()"></circle>
+            </svg>
+            <div class="donut-text">
+              <span class="donut-number">{{ summary?.totalOrders || 0 }}</span>
+              <span class="donut-label">Orders</span>
+            </div>
+          </div>
+          
+          <div class="status-legends">
+            <div class="legend-item" *ngFor="let item of statusDistribution | keyvalue">
+              <span class="legend-dot" [ngClass]="item.key.toLowerCase()"></span>
+              <span class="legend-name">{{ item.key }}</span>
+              <span class="legend-count">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="dashboard-tables">
+      <div class="table-card card">
+        <div class="card-header">
+          <h3>Recent Orders</h3>
+          <a routerLink="/orders" class="text-link-btn">Manage Orders</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Order No</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Placed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of recentOrders">
+                <td><strong>{{ order.orderNumber }}</strong></td>
+                <td>{{ order.customer?.name || order.customer?.user?.username || 'Guest' }}</td>
+                <td>{{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="'badge-' + getOrderStatusClass(order.status)">
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td>{{ (order.orderDate || order.createdAt) | date:'mediumDate' }}</td>
+              </tr>
+              <tr *ngIf="recentOrders.length === 0">
+                <td colspan="5" class="text-center">No recent orders yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card card">
+        <div class="card-header">
+          <h3>Top Products by Revenue</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product Name</th>
+                <th>Quantity Sold</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of summary?.topProducts; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td><strong>{{ prod.productName }}</strong></td>
+                <td>{{ prod.totalQuantity }}</td>
+                <td>{{ prod.totalRevenue | currency:'INR':'symbol':'1.2-2' }}</td>
+              </tr>
+              <tr *ngIf="!summary?.topProducts || summary?.topProducts.length === 0">
+                <td colspan="4" class="text-center">No product sales data yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card card">
+        <div class="card-header">
+          <h3>Recent Support Tickets</h3>
+          <a routerLink="/issues" class="text-link-btn">Manage Tickets</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Subject</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ticket of summary?.recentTickets">
+                <td><strong>{{ ticket.id }}</strong></td>
+                <td>{{ ticket.subject }}</td>
+                <td>{{ ticket.customerName }}</td>
+                <td>
+                  <span class="badge" [ngClass]="ticket.status === 'RESOLVED' ? 'badge-delivered' : 'badge-pending'">
+                    {{ ticket.status }}
+                  </span>
+                </td>
+                <td>{{ ticket.createdAt | date:'shortDate' }}</td>
+              </tr>
+              <tr *ngIf="!summary?.recentTickets || summary?.recentTickets.length === 0">
+                <td colspan="5" class="text-center">No recent tickets.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card card">
+        <div class="card-header">
+          <h3>Inventory Snapshot</h3>
+          <a routerLink="/stock" class="text-link-btn">Manage Stock</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Min Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of inventoryProducts">
+                <td><strong>{{ prod.name }}</strong></td>
+                <td>{{ prod.category?.name }}</td>
+                <td class="font-bold" [ngClass]="(prod.stock?.quantityAvailable || 0) === 0 ? 'text-danger' : ''">{{ prod.stock?.quantityAvailable || 0 }}</td>
+                <td>{{ prod.reorderLevel || 5 }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getInventoryBadgeClass(prod)">
+                    {{ getInventoryStatus(prod) }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="inventoryProducts.length === 0">
+                <td colspan="5" class="text-center">No products available.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== CUSTOMER / GUEST VIEW ================== -->
+  <div *ngIf="!isAdmin" class="customer-dashboard">
+    <div class="catalog-header">
+      <div class="header-welcome">
+        <h1>Welcome to OMS Storefront</h1>
+        <p>Browse our catalog, check product reviews, and add items to your cart.</p>
+      </div>
+      
+      <div class="catalog-actions" style="display: flex; gap: 1rem; align-items: center;">
+        <!-- Wishlist Toggle -->
+        <button 
+          *ngIf="currentUser && currentUser.roles && currentUser.roles.includes('CUSTOMER')"
+          class="btn" 
+          [class.btn-primary]="showWishlistOnly"
+          [class.btn-outline]="!showWishlistOnly"
+          (click)="toggleShowWishlistOnly()"
+          style="display: flex; align-items: center; gap: 0.5rem; height: 42px; padding: 0 1rem;"
+        >
+          <span class="material-icons" [style.color]="showWishlistOnly ? '#ffffff' : 'var(--secondary)'">{{ showWishlistOnly ? 'favorite' : 'favorite_border' }}</span>
+          <span>My Wishlist</span>
+        </button>
+
+        <!-- Search -->
+        <div class="search-bar">
+          <span class="material-icons-outlined search-icon">search</span>
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            [(ngModel)]="searchQuery" 
+            (ngModelChange)="onSearchChange()"
+            class="form-control"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Horizontal Scroll Bar -->
+    <div class="categories-scrollbar">
+      <button 
+        class="category-tag" 
+        [class.active]="selectedCategoryId === null"
+        (click)="selectCategory(null)"
+      >
+        All Products
+      </button>
+      <button 
+        *ngFor="let cat of categories" 
+        class="category-tag"
+        [class.active]="selectedCategoryId === cat.id"
+        (click)="selectCategory(cat.id)"
+      >
+        {{ cat.name }}
+      </button>
+    </div>
+
+    <!-- Product Cards Grid -->
+    <div class="products-grid" *ngIf="products.length > 0; else noProducts">
+      <div class="product-card card" *ngFor="let prod of products">
+        <div class="product-image" style="position: relative;">
+          <img [src]="prod.imageUrl || '/assets/placeholder.png'" [alt]="prod.name" (click)="openDetailsModal(prod)" style="cursor: pointer;" (error)="onImgError($event)" />
+          <div class="category-badge" (click)="openDetailsModal(prod)" style="cursor: pointer;">{{ prod.category?.name }}</div>
+          
+          <!-- Wishlist Heart Button -->
+          <button 
+            *ngIf="currentUser && currentUser.roles && currentUser.roles.includes('CUSTOMER')"
+            class="wishlist-heart-btn"
+            [class.active]="isInWishlist(prod.id)"
+            (click)="toggleWishlist(prod); $event.stopPropagation()"
+            title="Toggle Wishlist"
+          >
+            <span class="material-icons">{{ isInWishlist(prod.id) ? 'favorite' : 'favorite_border' }}</span>
+          </button>
+        </div>
+
+        <div class="product-body">
+          <h3 class="product-title" [title]="prod.name" (click)="openDetailsModal(prod)" style="cursor: pointer;">
+            {{ prod.name }}
+          </h3>
+          
+          <!-- Review Stars Summary -->
+          <div class="rating-container" (click)="openDetailsModal(prod)" style="cursor: pointer;">
+            <span class="stars">
+              <span class="material-icons star-gold" *ngFor="let s of getStarsArray(getProductRating(prod.id).score)">star</span>
+              <span class="material-icons star-gray" *ngFor="let s of getEmptyStarsArray(getProductRating(prod.id).score)">star_border</span>
+            </span>
+            <span class="rating-score">{{ getProductRating(prod.id).score }}</span>
+            <span>({{ getProductRating(prod.id).count }})</span>
+          </div>
+
+          <p class="product-desc" [title]="prod.description">{{ prod.description }}</p>
+          
+          <div class="product-price-stock">
+            <span class="price">{{ prod.price | currency:'INR':'symbol':'1.2-2' }}</span>
+            
+            <!-- Stock status -->
+            <span *ngIf="!prod.stock || prod.stock.quantityAvailable <= 0" class="badge badge-cancelled">Out of Stock</span>
+            <span *ngIf="prod.stock && prod.stock.quantityAvailable > 0 && prod.stock.quantityAvailable <= prod.reorderLevel" class="badge badge-pending">
+              Only {{ prod.stock.quantityAvailable }} left
+            </span>
+            <span *ngIf="prod.stock && prod.stock.quantityAvailable > prod.reorderLevel" class="badge badge-delivered">In Stock</span>
+          </div>
+        </div>
+
+        <div class="product-footer">
+          <div class="product-footer-actions">
+            <button 
+              class="btn btn-outline" 
+              (click)="openDetailsModal(prod)"
+              style="flex: 1;"
+            >
+              Details
+            </button>
+            <button 
+              class="btn btn-primary" 
+              [disabled]="!prod.stock || prod.stock.quantityAvailable <= 0"
+              (click)="addToCart(prod)"
+              style="flex: 1.5;"
+            >
+              <span class="material-icons-outlined">add_shopping_cart</span>
+              <span>Add to Cart</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noProducts>
+      <div class="empty-state card">
+        <span class="material-icons-outlined">search_off</span>
+        <h2>No products matched your search</h2>
+        <p>Try clearing filters or checking spelling.</p>
+        <button class="btn btn-outline" (click)="resetFilters()">Clear Filters</button>
+      </div>
+    </ng-template>
+
+    <!-- Product Details & Reviews Modal -->
+    <div class="modal-backdrop" *ngIf="detailsModalOpen">
+      <div class="modal-content card fade-in" style="max-width: 650px;">
+        <div class="modal-header">
+          <h2>Product Details</h2>
+          <button class="icon-btn" (click)="closeDetailsModal()">
+            <span class="material-icons-outlined">close</span>
+          </button>
+        </div>
+        
+        <div class="modal-body" *ngIf="selectedProduct">
+          <div class="details-grid">
+            <div class="details-img-wrapper">
+              <img [src]="selectedProduct.imageUrl || '/assets/placeholder.png'" [alt]="selectedProduct.name" (error)="onImgError($event)" />
+            </div>
+            
+            <div class="details-info">
+              <h3>{{ selectedProduct.name }}</h3>
+              <span class="badge badge-pending" style="align-self: flex-start;">{{ selectedProduct.category?.name }}</span>
+              
+              <div class="rating-container">
+                <span class="stars">
+                  <span class="material-icons star-gold" *ngFor="let s of getStarsArray(getProductRating(selectedProduct.id).score)">star</span>
+                  <span class="material-icons star-gray" *ngFor="let s of getEmptyStarsArray(getProductRating(selectedProduct.id).score)">star_border</span>
+                </span>
+                <span class="rating-score">{{ getProductRating(selectedProduct.id).score }}</span>
+                <span>({{ getProductRating(selectedProduct.id).count }} verified reviews)</span>
+              </div>
+
+              <p class="price">{{ selectedProduct.price | currency:'INR':'symbol':'1.2-2' }} <small class="text-secondary">(GST {{ selectedProduct.gstPercent }}%)</small></p>
+              <p class="description">{{ selectedProduct.description }}</p>
+              
+              <div class="stock-status-wrapper">
+                <span>Stock Status: </span>
+                <span *ngIf="!selectedProduct.stock || selectedProduct.stock.quantityAvailable <= 0" class="badge badge-cancelled">Out of Stock</span>
+                <span *ngIf="selectedProduct.stock && selectedProduct.stock.quantityAvailable > 0" class="badge badge-delivered">
+                  {{ selectedProduct.stock.quantityAvailable }} Available
+                </span>
+              </div>
+
+              <div class="qty-selector mt-4" *ngIf="selectedProduct.stock && selectedProduct.stock.quantityAvailable > 0">
+                <label class="form-label" style="margin-bottom: 0;">Qty:</label>
+                <div class="qty-control" style="margin: 0;">
+                  <button class="qty-btn" (click)="decDetailQty()">-</button>
+                  <span class="qty-val">{{ detailQty }}</span>
+                  <button class="qty-btn" (click)="incDetailQty()">+</button>
+                </div>
+              </div>
+
+              <button 
+                class="btn btn-primary w-full mt-4"
+                [disabled]="!selectedProduct.stock || selectedProduct.stock.quantityAvailable <= 0"
+                (click)="addSelectedToCart()"
+              >
+                <span class="material-icons-outlined">add_shopping_cart</span>
+                <span>Add to Shopping Cart</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Reviews Section -->
+          <div class="reviews-section">
+            <h4>Customer Reviews</h4>
+            <div class="reviews-list">
+              <div class="review-item" *ngFor="let rev of getProductReviews(selectedProduct.id)">
+                <div class="review-header">
+                  <span class="review-author">{{ rev.author }}</span>
+                  <span class="review-date">{{ rev.date }}</span>
+                </div>
+                <div class="rating-container" style="margin-bottom: 0.25rem;">
+                  <span class="stars">
+                    <span class="material-icons star-gold" *ngFor="let s of getStarsArray(rev.rating)">star</span>
+                    <span class="material-icons star-gray" *ngFor="let s of getEmptyStarsArray(rev.rating)">star_border</span>
+                  </span>
+                </div>
+                <p class="review-text">"{{ rev.text }}"</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

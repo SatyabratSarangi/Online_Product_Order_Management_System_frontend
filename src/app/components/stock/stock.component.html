@@ -1,0 +1,186 @@
+<div class="stock-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Stock & Inventory Control</h1>
+      <p>Monitor warehouse availability levels, adjust counts, and track stock ledger histories.</p>
+    </div>
+  </div>
+
+  <!-- Inventory Ledger table -->
+  <div class="table-card card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>In Stock</th>
+            <th>Minimum Level</th>
+            <th>Alert Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prod of products">
+            <td>
+              <strong>{{ prod.name }}</strong>
+              <div class="text-secondary text-xs">{{ prod.sku }}</div>
+            </td>
+            <td>{{ prod.category?.name }}</td>
+            <td class="font-bold" [class.text-danger]="prod.stock?.quantityAvailable <= prod.stock?.reorderLevel">
+              {{ prod.stock?.quantityAvailable || 0 }}
+            </td>
+            <td>{{ prod.stock?.reorderLevel || 10 }}</td>
+            <td>
+                <span class="badge" 
+                      [class.badge-delivered]="prod.stock?.quantityAvailable > prod.stock?.reorderLevel" 
+                      [class.badge-pending]="prod.stock?.quantityAvailable > 0 && prod.stock?.quantityAvailable <= prod.stock?.reorderLevel"
+                      [class.badge-cancelled]="!prod.stock || prod.stock?.quantityAvailable <= 0">
+                {{ !prod.stock || prod.stock?.quantityAvailable <= 0 ? 'Out of Stock' : (prod.stock?.quantityAvailable <= prod.stock?.reorderLevel ? 'Low Stock' : 'Healthy') }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-primary btn-sm" (click)="openAdjustModal(prod)">
+                  <span class="material-icons-outlined">tune</span>
+                  <span>Adjust</span>
+                </button>
+                <button class="btn btn-outline btn-sm" (click)="viewHistory(prod)">
+                  <span class="material-icons-outlined">history</span>
+                  <span>History</span>
+                </button>
+                <button class="btn btn-outline btn-sm" (click)="openEditModal(prod)">
+                  <span class="material-icons-outlined">edit</span>
+                  <span>Edit</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="products.length === 0">
+            <td colspan="6" class="text-center">No products found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Adjust Stock Modal -->
+  <div class="modal-backdrop" *ngIf="adjustModalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>Adjust Inventory: {{ selectedProduct?.name }}</h2>
+        <button class="icon-btn" (click)="closeAdjustModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="adjustForm" (ngSubmit)="submitAdjustment()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="actionType">Adjustment Type *</label>
+          <select id="actionType" formControlName="actionType" class="form-control">
+            <option value="ADD">Add Stock (+)</option>
+            <option value="REMOVE">Remove Stock (-)</option>
+            <option value="ADJUST">Force Set Stock (=)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="quantity">Quantity *</label>
+          <input type="number" id="quantity" formControlName="quantity" class="form-control" [class.is-invalid]="submittedAdjust && a['quantity'].errors" />
+          <div *ngIf="submittedAdjust && a['quantity'].errors" class="invalid-feedback">
+            Quantity must be at least 1.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="remarks">Remarks / Reason *</label>
+          <input type="text" id="remarks" formControlName="remarks" class="form-control" placeholder="e.g. Received new shipment, Damaged goods" [class.is-invalid]="submittedAdjust && a['remarks'].errors" />
+          <div *ngIf="submittedAdjust && a['remarks'].errors" class="invalid-feedback">
+            Remarks are required.
+          </div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeAdjustModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Confirm Adjust</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Reorder Level Modal -->
+  <div class="modal-backdrop" *ngIf="editModalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>Edit Stock: {{ selectedProduct?.name }}</h2>
+        <button class="icon-btn" (click)="closeEditModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="reorderLevel">Minimum Stock Level *</label>
+          <input type="number" id="reorderLevel" formControlName="reorderLevel" class="form-control" [class.is-invalid]="submittedEdit && e['reorderLevel'].errors" />
+          <div *ngIf="submittedEdit && e['reorderLevel'].errors" class="invalid-feedback">
+            Reorder level must be at least 1.
+          </div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ledger History Modal -->
+  <div class="modal-backdrop" *ngIf="historyModalOpen">
+    <div class="modal-content card fade-in max-w-lg">
+      <div class="modal-header">
+        <h2>Stock Log Ledger: {{ selectedProduct?.name }}</h2>
+        <button class="icon-btn" (click)="closeHistoryModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body scroll-history">
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Qty Change</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of historyLogs">
+                <td>{{ log.createdAt | date:'short' }}</td>
+                <td>
+                  <span class="badge" [class.badge-delivered]="log.changeType === 'ADD'" [class.badge-cancelled]="log.changeType === 'REMOVE'" [class.badge-confirmed]="log.changeType === 'ADJUST' || log.changeType === 'ORDER'">
+                    {{ log.changeType }}
+                  </span>
+                </td>
+                <td>{{ log.changeType === 'REMOVE' ? '-' : '+' }}{{ log.qty }}</td>
+                <td class="text-xs">{{ log.note }}</td>
+              </tr>
+              <tr *ngIf="historyLogs.length === 0">
+                <td colspan="4" class="text-center">No ledger adjustment logs for this product.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,196 @@
+<div class="issue-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Customer Support Tickets</h1>
+      <p>Submit your complaints, check resolution status, and chat with helpdesk representatives.</p>
+    </div>
+    <button class="btn btn-primary" *ngIf="isCustomer" (click)="openCreateModal()">
+      <span class="material-icons-outlined">add_comment</span>
+      <span>Raise Ticket</span>
+    </button>
+  </div>
+
+  <!-- Tickets Grid Layout -->
+  <div class="tickets-layout" [class.chat-open]="selectedIssue !== null">
+    <!-- Sidebar tickets list -->
+    <div class="tickets-list card">
+      <h3>All Support Tickets ({{ issues.length }})</h3>
+      <ul class="list-wrapper">
+        <li *ngFor="let issue of issues" 
+            [class.active]="selectedIssue?.id === issue.id"
+            (click)="selectIssue(issue)">
+          <div class="ticket-header">
+            <strong>#{{ issue.id }} - {{ issue.subject }}</strong>
+            <span class="badge" [ngClass]="{
+              'badge-delivered': issue.status === 'RESOLVED',
+              'badge-confirmed': issue.status === 'IN_PROGRESS',
+              'badge-pending': issue.status === 'OPEN'
+            }">
+              {{ issue.status }}
+            </span>
+          </div>
+          <p class="ticket-desc">{{ issue.description }}</p>
+          <div class="ticket-footer">
+            <span>By: {{ issue.customer?.name || 'Customer' }}</span>
+            <span>{{ issue.createdAt | date:'shortDate' }}</span>
+          </div>
+          <div class="ticket-actions" *ngIf="isCustomer && issue.status === 'OPEN'" (click)="$event.stopPropagation()">
+            <button class="icon-btn-sm" title="Edit" (click)="openEditModal(issue)">
+              <span class="material-icons-outlined">edit</span>
+            </button>
+            <button class="icon-btn-sm text-red" title="Delete" (click)="deleteIssue(issue)">
+              <span class="material-icons-outlined">delete</span>
+            </button>
+          </div>
+        </li>
+        <li *ngIf="issues.length === 0" class="empty-list">No tickets available.</li>
+      </ul>
+    </div>
+
+    <!-- Chat thread section -->
+    <div class="ticket-chat-area card">
+      <div *ngIf="selectedIssue; else noTicketSelected">
+        <div class="chat-header">
+          <button class="icon-btn mobile-back-btn" (click)="selectedIssue = null" title="Back to list">
+            <span class="material-icons-outlined">arrow_back</span>
+          </button>
+          <div>
+            <h2>#{{ selectedIssue.id }}: {{ selectedIssue.subject }}</h2>
+            <p class="text-secondary text-xs">Raised by {{ selectedIssue.customer?.name }} on {{ selectedIssue.createdAt | date:'medium' }}</p>
+          </div>
+          <div class="chat-actions" *ngIf="isAdminOrAgent">
+            <button class="btn btn-tertiary btn-sm" 
+                    *ngIf="selectedIssue.status !== 'RESOLVED'" 
+                    (click)="resolveTicket(selectedIssue.id)">
+              Mark Resolved
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-messages">
+          <!-- Initial Description -->
+          <div class="message-bubble customer-bubble">
+            <div class="bubble-header">
+              <strong>{{ selectedIssue.customer?.name }} (Customer)</strong>
+              <span>{{ selectedIssue.createdAt | date:'short' }}</span>
+            </div>
+            <p>{{ selectedIssue.description }}</p>
+            <div *ngIf="selectedIssue.order" class="order-link-alert">
+              Related to Order ID: <strong>{{ selectedIssue.order.id }}</strong>
+            </div>
+          </div>
+
+          <!-- Replies -->
+          <div *ngFor="let reply of selectedIssue.replies" 
+               class="message-bubble" 
+               [ngClass]="reply.repliedBy?.role?.name === 'ADMIN' || reply.repliedBy?.role?.name === 'AGENT' ? 'admin-bubble' : 'customer-bubble'">
+            <div class="bubble-header">
+              <strong>{{ reply.repliedBy?.username }} ({{ reply.repliedBy?.role?.name }})</strong>
+              <span>{{ reply.createdAt | date:'short' }}</span>
+            </div>
+            <p>{{ reply.message }}</p>
+          </div>
+        </div>
+
+        <!-- Send reply form -->
+        <form [formGroup]="replyForm" (ngSubmit)="sendReply()" class="chat-input-form" *ngIf="selectedIssue.status !== 'RESOLVED'">
+          <input type="text" formControlName="message" placeholder="Type your support message..." class="form-control" />
+          <button type="submit" [disabled]="replyLoading" class="btn btn-primary">
+            <span class="material-icons-outlined">send</span>
+          </button>
+        </form>
+        <div *ngIf="selectedIssue.status === 'RESOLVED'" class="resolved-banner">
+          <span class="material-icons-outlined text-green">check_circle</span>
+          <span>This ticket has been marked RESOLVED. Chat is locked.</span>
+        </div>
+      </div>
+      
+      <ng-template #noTicketSelected>
+        <div class="empty-chat">
+          <span class="material-icons-outlined">support</span>
+          <h2>No Ticket Selected</h2>
+          <p>Select an issue from the list on the left to view the thread or reply.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Create Ticket Modal -->
+  <div class="modal-backdrop" *ngIf="createModalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>Raise Support Ticket</h2>
+        <button class="icon-btn" (click)="closeCreateModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="ticketForm" (ngSubmit)="submitTicket()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="subject">Subject *</label>
+          <input type="text" id="subject" formControlName="subject" class="form-control" placeholder="Brief subject" [class.is-invalid]="submittedTicket && t['subject'].errors" />
+          <div *ngIf="submittedTicket && t['subject'].errors" class="invalid-feedback">Subject is required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="orderId">Related Order ID (Optional)</label>
+          <input type="number" id="orderId" formControlName="orderId" class="form-control" placeholder="e.g. 12" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Detailed Description *</label>
+          <textarea id="description" formControlName="description" class="form-control" rows="4" placeholder="Describe your issue..." [class.is-invalid]="submittedTicket && t['description'].errors"></textarea>
+          <div *ngIf="submittedTicket && t['description'].errors" class="invalid-feedback">Description is required.</div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Submit Ticket</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Ticket Modal -->
+  <div class="modal-backdrop" *ngIf="editModalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>Edit Support Ticket #{{ editIssue?.id }}</h2>
+        <button class="icon-btn" (click)="closeEditModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="editSubject">Subject *</label>
+          <input type="text" id="editSubject" formControlName="subject" class="form-control" placeholder="Brief subject" [class.is-invalid]="submittedEdit && e['subject'].errors" />
+          <div *ngIf="submittedEdit && e['subject'].errors" class="invalid-feedback">Subject is required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editOrderId">Related Order ID (Optional)</label>
+          <input type="number" id="editOrderId" formControlName="orderId" class="form-control" placeholder="e.g. 12" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editDescription">Detailed Description *</label>
+          <textarea id="editDescription" formControlName="description" class="form-control" rows="4" placeholder="Describe your issue..." [class.is-invalid]="submittedEdit && e['description'].errors"></textarea>
+          <div *ngIf="submittedEdit && e['description'].errors" class="invalid-feedback">Description is required.</div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Update Ticket</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,157 @@
+<div class="reports-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Sales Reporting & Analysis</h1>
+      <p>Group revenue data by various dimensions, filter by date range, and download formatted reports.</p>
+    </div>
+  </div>
+
+  <!-- Filters & Actions -->
+  <div class="filter-card card">
+    <div class="filter-row">
+      <div class="form-group">
+        <label class="form-label" for="groupBy">Group Sales By</label>
+        <select id="groupBy" [(ngModel)]="groupBy" (change)="loadReport()" class="form-control">
+          <option value="MONTH">Month</option>
+          <option value="DATE">Date</option>
+          <option value="CUSTOMER">Customer</option>
+          <option value="PRODUCT">Product</option>
+          <option value="CATEGORY">Category</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="fromDate">From Date</label>
+        <input type="date" id="fromDate" [(ngModel)]="fromDate" (change)="loadReport()" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="toDate">To Date</label>
+        <input type="date" id="toDate" [(ngModel)]="toDate" (change)="loadReport()" class="form-control" />
+      </div>
+
+      <div class="export-buttons">
+        <button class="btn btn-secondary" (click)="exportReport('excel')">
+          <span class="material-icons-outlined">table_view</span>
+          <span>Export Excel</span>
+        </button>
+        <button class="btn btn-primary" (click)="exportReport('pdf')">
+          <span class="material-icons-outlined">picture_as_pdf</span>
+          <span>Export PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid" *ngIf="summary">
+    <div class="summary-card card">
+      <div class="summary-icon revenue-icon">
+        <span class="material-icons-outlined">account_balance</span>
+      </div>
+      <div class="summary-info">
+        <h3>Total Revenue</h3>
+        <p class="summary-value">{{ summary.totalRevenue | currency:'INR':'symbol':'1.2-2' }}</p>
+      </div>
+    </div>
+    <div class="summary-card card">
+      <div class="summary-icon orders-icon">
+        <span class="material-icons-outlined">shopping_cart</span>
+      </div>
+      <div class="summary-info">
+        <h3>Total Orders</h3>
+        <p class="summary-value">{{ summary.totalOrders }}</p>
+      </div>
+    </div>
+    <div class="summary-card card">
+      <div class="summary-icon qty-icon">
+        <span class="material-icons-outlined">inventory</span>
+      </div>
+      <div class="summary-info">
+        <h3>Qty Sold</h3>
+        <p class="summary-value">{{ summary.totalQuantitySold }}</p>
+      </div>
+    </div>
+    <div class="summary-card card">
+      <div class="summary-icon avg-icon">
+        <span class="material-icons-outlined">trending_up</span>
+      </div>
+      <div class="summary-info">
+        <h3>Avg Order Value</h3>
+        <p class="summary-value">{{ summary.averageOrderValue | currency:'INR':'symbol':'1.2-2' }}</p>
+      </div>
+    </div>
+    <div class="summary-card card">
+      <div class="summary-icon top-icon">
+        <span class="material-icons-outlined">star</span>
+      </div>
+      <div class="summary-info">
+        <h3>Top {{ groupBy }}</h3>
+        <p class="summary-value text-sm">{{ summary.topGroupName }}</p>
+        <p class="summary-sub">{{ summary.topGroupSales | currency:'INR':'symbol':'1.2-2' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Content Layout -->
+  <div class="report-content-grid" *ngIf="!loading; else spinnerTpl">
+    <!-- Visualization Card -->
+    <div class="chart-card card" *ngIf="items.length > 0">
+      <h3>Sales Visualization (Grouped by {{ groupBy }})</h3>
+      <div class="bar-chart-vertical">
+        <div class="chart-row" *ngFor="let item of items">
+          <div class="row-label" [title]="item.groupName">{{ item.groupName }}</div>
+          <div class="bar-container">
+            <div class="bar" [style.width.%]="getPercentage(item.totalSales)"></div>
+            <span class="bar-value">{{ item.totalSales | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Data Table -->
+    <div class="table-card card">
+      <div class="table-header">
+        <h3>Sales Breakdown</h3>
+        <span class="text-secondary text-sm">{{ items.length }} rows</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ groupBy }}</th>
+              <th>Orders</th>
+              <th>Qty Sold</th>
+              <th>Total Sales</th>
+              <th>% Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of items">
+              <td><strong>{{ item.groupName }}</strong></td>
+              <td>{{ item.totalOrders }}</td>
+              <td>{{ item.quantitySold }}</td>
+              <td class="font-bold text-primary">{{ item.totalSales | currency:'INR':'symbol':'1.2-2' }}</td>
+              <td>
+                <div class="share-bar">
+                  <div class="share-fill" [style.width.%]="getShare(item.totalSales)"></div>
+                  <span>{{ getShare(item.totalSales) }}%</span>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="items.length === 0">
+              <td colspan="5" class="text-center">No sales data found for the selected filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #spinnerTpl>
+    <div class="empty-state">
+      <div class="spinner border-indigo"></div>
+      <p>Compiling report statistics...</p>
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,81 @@
+<div class="categories-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Category Management</h1>
+      <p>Organize products by grouping them into categories.</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddModal()">
+      <span class="material-icons-outlined">add</span>
+      <span>Add Category</span>
+    </button>
+  </div>
+
+  <!-- Category List Table -->
+  <div class="table-card card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cat of categories">
+            <td>{{ cat.id }}</td>
+            <td><strong>{{ cat.name }}</strong></td>
+            <td>{{ cat.description || 'N/A' }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="icon-btn text-indigo" (click)="openEditModal(cat)" title="Edit">
+                  <span class="material-icons-outlined">edit</span>
+                </button>
+                <button class="icon-btn text-danger" (click)="deleteCategory(cat.id)" title="Delete">
+                  <span class="material-icons-outlined">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="categories.length === 0">
+            <td colspan="4" class="text-center">No categories found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-backdrop" *ngIf="modalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Edit Category' : 'Add Category' }}</h2>
+        <button class="icon-btn" (click)="closeModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="name">Category Name *</label>
+          <input type="text" id="name" formControlName="name" class="form-control" [class.is-invalid]="submitted && f['name'].errors" />
+          <div *ngIf="submitted && f['name'].errors" class="invalid-feedback">Category name is required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description</label>
+          <textarea id="description" formControlName="description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>{{ loading ? 'Saving...' : 'Save Category' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

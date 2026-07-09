@@ -1,0 +1,12 @@
+.products-container { padding: 2rem; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.page-header p { color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem; }
+.filter-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.flex-1 { flex: 1; min-width: 250px; }
+.select-wrapper { width: 200px; }
+.table-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-app); }
+.action-buttons { display: flex; gap: 0.5rem; }
+.text-indigo { color: var(--primary); }
+.text-danger { color: var(--status-cancelled); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.invalid-feedback { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; }

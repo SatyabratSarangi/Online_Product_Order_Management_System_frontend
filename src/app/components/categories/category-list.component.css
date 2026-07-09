@@ -1,0 +1,7 @@
+.categories-container { padding: 2rem; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.page-header p { color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem; }
+.action-buttons { display: flex; gap: 0.5rem; }
+.text-indigo { color: var(--primary); }
+.text-danger { color: var(--status-cancelled); }
+.invalid-feedback { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; }

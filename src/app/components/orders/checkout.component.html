@@ -1,0 +1,98 @@
+<div class="checkout-container container fade-in">
+  <div class="page-title-bar">
+    <h1>Checkout</h1>
+    <p>Complete your delivery and billing details to place the order.</p>
+  </div>
+
+  <div class="checkout-grid" *ngIf="cartItems.length > 0; else emptyCart">
+    <!-- Address Form -->
+    <div class="form-card card">
+      <h3>Billing & Delivery Address</h3>
+      <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()">
+        <div class="form-group">
+          <label class="form-label" for="name">Recipient Name *</label>
+          <input type="text" id="name" formControlName="name" class="form-control" [class.is-invalid]="submitted && f['name'].errors" />
+          <div *ngIf="submitted && f['name'].errors" class="invalid-feedback">Name is required.</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone Number *</label>
+            <input type="text" id="phone" formControlName="phone" class="form-control" [class.is-invalid]="submitted && f['phone'].errors" />
+            <div *ngIf="submitted && f['phone'].errors" class="invalid-feedback">Phone is required.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pincode">Pincode *</label>
+            <input type="text" id="pincode" formControlName="pincode" class="form-control" [class.is-invalid]="submitted && f['pincode'].errors" />
+            <div *ngIf="submitted && f['pincode'].errors" class="invalid-feedback">Valid 6-digit Pincode is required.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="address">Delivery Address *</label>
+          <textarea id="address" formControlName="address" rows="3" class="form-control" [class.is-invalid]="submitted && f['address'].errors"></textarea>
+          <div *ngIf="submitted && f['address'].errors" class="invalid-feedback">Address is required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="city">City *</label>
+          <input type="text" id="city" formControlName="city" class="form-control" [class.is-invalid]="submitted && f['city'].errors" />
+          <div *ngIf="submitted && f['city'].errors" class="invalid-feedback">City is required.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="remarks">Special Instructions (e.g. Leave at door)</label>
+          <input type="text" id="remarks" formControlName="remarks" class="form-control" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" (click)="goBack()">Back to Shop</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Confirm & Place Order</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cart Summary -->
+    <div class="summary-card card">
+      <h3>Order Summary</h3>
+      <div class="summary-items">
+        <div class="summary-item" *ngFor="let item of cartItems">
+          <img [src]="item.imageUrl" (error)="onImgError($event)" class="summary-img" alt="Thumbnail" />
+          <div class="summary-info">
+            <h4>{{ item.productName }}</h4>
+            <p>{{ item.quantity }} x {{ item.price | currency:'INR':'symbol':'1.2-2' }} <small class="text-secondary">(GST {{ item.gstPercent }}%)</small></p>
+          </div>
+          <span class="summary-total">{{ (item.price * item.quantity) | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="summary-totals">
+        <div class="totals-row">
+          <span>Subtotal:</span>
+          <span>{{ cartSubtotal | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="totals-row">
+          <span>GST Tax Amount:</span>
+          <span>{{ cartGst | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="totals-row grand-total">
+          <span>Total Payable:</span>
+          <span>{{ cartTotal | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyCart>
+    <div class="empty-state card">
+      <span class="material-icons-outlined">remove_shopping_cart</span>
+      <h2>Your cart is empty</h2>
+      <p>Please add products to your cart before checking out.</p>
+      <button class="btn btn-primary" (click)="goBack()">Start Shopping</button>
+    </div>
+  </ng-template>
+</div>

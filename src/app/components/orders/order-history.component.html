@@ -1,0 +1,151 @@
+<div class="orders-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>{{ isAdminOrAgent ? 'Manage Customer Orders' : 'My Order History' }}</h1>
+      <p>{{ isAdminOrAgent ? 'Track all customer bookings, view invoice status, and update delivery tracking details.' : 'Track your bookings, view delivery countdowns, and download invoices.' }}</p>
+    </div>
+  </div>
+
+  <!-- Orders table -->
+  <div class="table-card card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order Number</th>
+            <th *ngIf="isAdminOrAgent">Customer</th>
+            <th>Date</th>
+            <th>Remarks</th>
+            <th>Total Amount</th>
+            <th>Order Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of orders">
+            <td><strong>{{ order.orderNumber }}</strong></td>
+            <td *ngIf="isAdminOrAgent">
+              <div><strong>{{ order.customer?.name || 'Guest' }}</strong></div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ order.customer?.phone || '' }}</div>
+            </td>
+            <td>{{ (order.orderDate || order.createdAt) | date:'medium' }}</td>
+            <td>{{ order.remarks || '-' }}</td>
+            <td class="font-bold">{{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}</td>
+            <td>
+              <span class="badge" [ngClass]="'badge-' + order.status.toLowerCase()">
+                {{ order.status }}
+              </span>
+              <!-- Countdown timer display -->
+              <div class="countdown-timer text-indigo" *ngIf="orderCountdowns[order.id]" style="font-size: 0.75rem; margin-top: 0.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                <span class="material-icons-outlined" style="font-size: 14px;">timer</span>
+                <span>{{ orderCountdowns[order.id] }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-outline btn-sm" (click)="viewOrderDetails(order)">
+                  <span class="material-icons-outlined">visibility</span>
+                  <span>Details</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" (click)="downloadInvoice(order.id)" title="Download Invoice">
+                  <span class="material-icons-outlined">download</span>
+                  <span>Invoice</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="orders.length === 0">
+            <td colspan="7" class="text-center">No orders found in the system.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div class="modal-backdrop" *ngIf="detailsModalOpen">
+    <div class="modal-content card fade-in max-w-lg">
+      <div class="modal-header">
+        <h2>Order Details: {{ selectedOrder?.orderNumber }}</h2>
+        <button class="icon-btn" (click)="closeDetailsModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedOrder">
+        <!-- Admin Order Control Section -->
+        <div class="details-section" *ngIf="isAdminOrAgent" style="background-color: var(--bg-app); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+          <h3 style="margin-top: 0; color: var(--primary);">Admin Status Control</h3>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <span style="font-weight: 600; font-size: 0.9rem;">Change Order State:</span>
+            <select [value]="selectedOrder.status" (change)="onStatusChange(selectedOrder.id, $event)" class="form-control" style="width: auto; display: inline-block; padding: 0.4rem 2rem 0.4rem 1rem;">
+              <option value="PENDING">PENDING</option>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="PACKED">PACKED</option>
+              <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+              <option value="DELIVERED">DELIVERED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h3>Order Information</h3>
+          <div class="info-grid">
+            <div><span>Status:</span> <strong [ngClass]="'text-' + selectedOrder.status.toLowerCase()">{{ selectedOrder.status }}</strong></div>
+            <div><span>Date Placed:</span> <span>{{ (selectedOrder.orderDate || selectedOrder.createdAt) | date:'medium' }}</span></div>
+            <div><span>Remarks:</span> <span>{{ selectedOrder.remarks || 'None' }}</span></div>
+            <div><span>Grand Total:</span> <strong class="text-primary">{{ selectedOrder.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            <div *ngIf="orderCountdowns[selectedOrder.id]">
+              <span>Delivery Countdown:</span>
+              <strong class="text-indigo">{{ orderCountdowns[selectedOrder.id] }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="details-section">
+          <h3>Ordered Items</h3>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedOrder.orderItems">
+                <td>{{ item.product?.name }}</td>
+                <td>{{ item.unitPrice | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td>{{ item.quantity }}</td>
+                <td class="font-bold">{{ item.lineTotal | currency:'INR':'symbol':'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Delivery Tracking -->
+        <div class="details-section" *ngIf="delivery">
+          <h3>Delivery Tracking</h3>
+          <div class="info-grid">
+            <div><span>Tracking Status:</span> <strong class="text-indigo">{{ delivery.deliveryStatus }}</strong></div>
+            <div><span>Delivery Agent:</span> <span>{{ delivery.deliveryPerson || 'Not Assigned' }}</span></div>
+            <div><span>Contact:</span> <span>{{ delivery.contact || 'N/A' }}</span></div>
+            <div><span>Expected Delivery Date:</span> <span>{{ (delivery.expectedDate | date:'mediumDate') || 'N/A' }}</span></div>
+          </div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeDetailsModal()">Close</button>
+          <button type="button" class="btn btn-secondary" (click)="downloadInvoice(selectedOrder.id)">
+            <span class="material-icons-outlined">download</span>
+            <span>Download Invoice PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

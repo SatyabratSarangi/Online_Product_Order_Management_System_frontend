@@ -1,0 +1,45 @@
+.reports-container { padding: 2rem; }
+.page-header { margin-bottom: 2rem; }
+.page-header p { color: var(--text-secondary); font-size: 0.95rem; }
+.text-sm { font-size: 0.85rem; }
+.text-secondary { color: var(--text-secondary); }
+
+.filter-card { margin-bottom: 1.5rem; }
+.filter-row { display: flex; align-items: flex-end; justify-content: flex-start; flex-wrap: wrap; gap: 1rem; }
+.filter-row .form-group { margin-bottom: 0; min-width: 180px; }
+.export-buttons { display: flex; gap: 0.75rem; margin-left: auto; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.summary-card { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; }
+.summary-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.summary-icon span { font-size: 24px; color: white; }
+.revenue-icon { background: linear-gradient(135deg, var(--primary), #5c6bc0); }
+.orders-icon { background: linear-gradient(135deg, var(--secondary), #f48fb1); }
+.qty-icon { background: linear-gradient(135deg, var(--tertiary), #4db6ac); }
+.avg-icon { background: linear-gradient(135deg, #ff9800, #ffb74d); }
+.top-icon { background: linear-gradient(135deg, #9c27b0, #ce93d8); }
+.summary-info h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.25rem; }
+.summary-value { font-size: 1.25rem; font-weight: 800; }
+.summary-sub { font-size: 0.85rem; color: var(--text-secondary); }
+
+.report-content-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+.chart-card h3, .table-card h3 { font-size: 1rem; margin-bottom: 1.25rem; }
+.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.table-header h3 { margin-bottom: 0; }
+
+.bar-chart-vertical { display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 0; }
+.chart-row { display: flex; align-items: center; gap: 1rem; }
+.row-label { width: 140px; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex-shrink: 0; }
+.bar-container { flex: 1; background-color: var(--bg-app); height: 24px; border-radius: 9999px; overflow: hidden; position: relative; display: flex; align-items: center; }
+.bar { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 9999px; transition: width 0.6s ease-out; min-width: 4px; }
+.bar-value { position: absolute; right: 12px; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+
+.share-bar { display: flex; align-items: center; gap: 0.5rem; }
+.share-fill { height: 8px; background: var(--primary); border-radius: 9999px; min-width: 4px; max-width: 100px; }
+.share-bar span { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; }
+
+.border-indigo { border-color: rgba(63, 81, 181, 0.2); border-top-color: var(--primary); }
+.spinner { width: 36px; height: 36px; border: 3.5px solid rgba(0,0,0,0.1); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem; color: var(--text-secondary); }

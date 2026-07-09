@@ -1,0 +1,134 @@
+<div class="delivery-container fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Delivery & Shipment Management</h1>
+      <p>Update order statuses, assign courier agents, and track shipments in real-time.</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'active'" (click)="activeTab = 'active'; loadDeliveries()">
+      <span class="material-icons-outlined">local_shipping</span>
+      <span>Active Deliveries</span>
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadDeliveries()">
+      <span class="material-icons-outlined">history</span>
+      <span>Delivery History</span>
+    </button>
+  </div>
+
+  <!-- Deliveries List table -->
+  <div class="table-card card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order No</th>
+            <th>Customer</th>
+            <th>Total Value</th>
+            <th>Order Status</th>
+            <th>Delivery Person</th>
+            <th>Tracking Status</th>
+            <th>Expected Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let delivery of deliveries">
+            <td><strong>{{ delivery.order?.orderNumber }}</strong></td>
+            <td>{{ delivery.order?.customer?.name || 'N/A' }}</td>
+            <td>{{ delivery.order?.totalAmount | currency:'INR':'symbol':'1.2-2' }}</td>
+            <td>
+              <span class="badge" [ngClass]="'badge-' + (delivery.order?.status || '').toLowerCase()">
+                {{ delivery.order?.status }}
+              </span>
+            </td>
+            <td>{{ delivery.deliveryPerson || 'Not Assigned' }}</td>
+            <td>{{ delivery.deliveryStatus || 'Not Shipped' }}</td>
+            <td>{{ delivery.expectedDate | date:'mediumDate' || 'N/A' }}</td>
+            <td>
+              <div class="action-buttons" *ngIf="activeTab === 'active'">
+                <button class="btn btn-primary btn-sm" (click)="openUpdateModal(delivery)">
+                  <span class="material-icons-outlined">local_shipping</span>
+                  <span>Update Dispatch</span>
+                </button>
+              </div>
+              <div class="action-buttons" *ngIf="activeTab === 'history'">
+                <span class="text-green" style="font-size: 0.85rem; font-weight: 600;">
+                  Delivered {{ delivery.deliveredDate | date:'mediumDate' }}
+                </span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="deliveries.length === 0">
+            <td colspan="8" class="text-center">{{ activeTab === 'active' ? 'No active deliveries found.' : 'No delivery history found.' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Update Dispatch Modal -->
+  <div class="modal-backdrop" *ngIf="modalOpen">
+    <div class="modal-content card fade-in">
+      <div class="modal-header">
+        <h2>Dispatch Order: {{ selectedDelivery?.order?.orderNumber }}</h2>
+        <button class="icon-btn" (click)="closeModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="deliveryForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="orderStatus">Order Status *</label>
+          <select id="orderStatus" formControlName="orderStatus" class="form-control">
+            <option value="PENDING">PENDING</option>
+            <option value="CONFIRMED">CONFIRMED</option>
+            <option value="PACKED">PACKED</option>
+            <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="deliveryStatus">Delivery Status *</label>
+          <select id="deliveryStatus" formControlName="deliveryStatus" class="form-control">
+            <option value="">Select status</option>
+            <option value="PENDING">PENDING</option>
+            <option value="CONFIRMED">CONFIRMED</option>
+            <option value="PACKED">PACKED</option>
+            <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="deliveryPerson">Delivery Person / Courier Agent</label>
+          <input type="text" id="deliveryPerson" formControlName="deliveryPerson" class="form-control" placeholder="Agent name" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="contact">Agent Contact Number</label>
+          <input type="text" id="contact" formControlName="contact" class="form-control" placeholder="Contact number" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="expectedDate">Expected Delivery Date</label>
+          <input type="date" id="expectedDate" formControlName="expectedDate" class="form-control" />
+        </div>
+
+        <div class="modal-footer-btns">
+          <button type="button" class="btn btn-outline" (click)="closeModal()">Cancel</button>
+          <button type="submit" [disabled]="loading" class="btn btn-primary">
+            <span *ngIf="loading" class="spinner"></span>
+            <span>Save Dispatch</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,23 @@
+[build]
+  publish = "dist/ui"
+  command = "npm run build"
+
+# API Proxy redirect
+[[redirects]]
+  from = "/api/*"
+  to = "https://online-product-order-management-system.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Uploaded files Proxy redirect
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://online-product-order-management-system.onrender.com/uploads/:splat"
+  status = 200
+  force = true
+
+# SPA fallback redirect (Ensures Angular routing works when refreshing pages like /products)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
